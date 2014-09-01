@@ -1,0 +1,11 @@
+@extends('layouts.default')
+@section('title') Home @stop
+
+{{ Casset::add('css/controllers/index/index.less') }}
+{{ Casset::add('js/controllers/index/index.js') }}
+
+@section('content')
+	<div class="container margin-top">
+		Hello Laravel!
+	</div>
+@stop

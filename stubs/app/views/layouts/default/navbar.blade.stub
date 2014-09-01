@@ -1,0 +1,31 @@
+<div class="container">
+	<div class="navbar-header">
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".top-navbar-collapse">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+		</button>
+		<a href="/" class="navbar-brand">{{{ company() }}}</a>
+	</div>
+	<nav class="collapse navbar-collapse top-navbar-collapse">
+		@if (Auth::check())
+			<ul class="nav navbar-nav navbar-right" id="navbar-logged-in">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+						My Account
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						{{ url_li('account', 'My Account') }}
+						{{ url_li('logout', 'Logout') }}
+					</ul>
+				</li>
+			</ul>
+		@else
+			<ul class="nav navbar-nav navbar-right" id="navbar-logged-out">
+				{{ url_li('login', 'Log in') }}
+				{{ url_li('signup', 'Sign up') }}
+			</ul>
+		@endif
+	</nav>
+</div>

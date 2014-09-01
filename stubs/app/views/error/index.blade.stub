@@ -1,0 +1,19 @@
+@extends('layouts.default')
+@section('title') Whoops! @stop
+
+@section('content')
+	<div class="errorpage">
+		@if (method_exists($exception, 'getStatusCode') && 404 == $exception->getStatusCode())
+			<div class="error-404">
+				<h2>404</h2>
+				<h3>Whoops!</h3>
+				<p>This page cannot be found!</p>
+			</div>
+		@else
+			<div class="error-general">
+				<h2>Whoops!</h2>
+				<p>There was an error.</p>
+			</div>
+		@endif
+	</div>
+@stop

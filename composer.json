@@ -1,0 +1,22 @@
+{
+	"name": "mmanos/laravel-utilities",
+	"description": "Custom Laravel application utilities.",
+	"keywords": ["laravel", "utilities"],
+	"authors": [
+		{
+			"name": "Mark Manos",
+			"email": "mark@airpac.com"
+		}
+	],
+	"autoload": {
+		"classmap": ["src"]
+	},
+	"require": {
+		"symfony/console": "~2.3"
+	},
+	"bin": [
+		"mmanos-laravel"
+	],
+	"minimum-stability": "stable",
+	"license": "MIT"
+}

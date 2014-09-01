@@ -1,0 +1,78 @@
+
+/*
+|--------------------------------------------------------------------------
+| Handle HTTP Exceptions
+|--------------------------------------------------------------------------
+|
+*/
+
+App::error(function(Symfony\Component\HttpKernel\Exception\HttpException $e) {
+	if (Request::wantsJson()) {
+		$response = null;
+		switch ($e->getStatusCode()) {
+			case 404:
+				$msg = 'Not Found';
+				break;
+				
+			case 405:
+				$msg = 'Method Not Allowed';
+				break;
+				
+			case 400:
+				$msg = 'Bad Request';
+				break;
+				
+			case 401:
+				$msg = 'Unauthorized';
+				break;
+				
+			case 403:
+				$msg = 'Forbidden';
+				break;
+				
+			case 422:
+				$msg = 'Unprocessable Entity';
+				$decoded_message = json_decode($e->getMessage(), true);
+				if (is_array($decoded_message)) {
+					$response = Response::json(array(
+						'status'  => $e->getStatusCode(),
+						'message' => 'Validation Failed',
+						'errors'  => $decoded_message,
+					), $e->getStatusCode());
+				}
+				break;
+				
+			case 410:
+				$msg = 'Resource Deleted';
+				break;
+				
+			case 500:
+				$msg = 'Server Error';
+				break;
+				
+			default:
+				$msg = 'Error';
+		}
+		
+		if (!$response) {
+			$response = Response::json(array(
+				'status'  => $e->getStatusCode(),
+				'message' => $e->getMessage() ? $e->getMessage() : $msg,
+			), $e->getStatusCode());
+		}
+		
+		return $response;
+	}
+	
+	if (401 == $e->getStatusCode()) {
+		$url_parts = parse_url(URL::full());
+		$redir = array_get($url_parts, 'path');
+		$redir = empty($url_parts['query']) ? $redir : $redir . '?' . array_get($url_parts, 'query');
+		
+		return $redir ?
+			Redirect::action('AuthController@getLogin', array('redir' => $redir))
+			: Redirect::action('AuthController@getLogin');
+	}
+	
+	return Response::view('error.index', array('exception' => $e), $e->getStatusCode());
+});

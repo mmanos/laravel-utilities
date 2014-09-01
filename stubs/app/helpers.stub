@@ -1,0 +1,233 @@
+<?php
+
+/**
+ * Dump the given value.
+ *
+ * @param mixed $value
+ * 
+ * @return void
+ */
+function dar($value)
+{
+	echo '<pre class="dar">';
+		print_r($value);
+	echo '</pre>';
+}
+
+/**
+ * Return the name of the company.
+ */
+function company()
+{
+	return Config::get('app.company');
+}
+
+/**
+ * Generate an HTML nav <li> link to a route.
+ *
+ * An array of parameters may be specified to fill in URI segment wildcards.
+ *
+ * <code>
+ *		// Generate a link to "/"
+ *		echo url_li('/', 'Home');
+ *
+ *		// Generate a link to the "/rofile" route and add some parameters
+ *		echo url_li('/profile', 'Profile', array('ryan'));
+ * </code>
+ *
+ * @param  string  $action
+ * @param  string  $title
+ * @param  array   $parameters
+ * @param  array   $attributes
+ * @return string
+ */
+function url_li($path, $title = null, $parameters = array(), $attributes = array())
+{
+	if (Request::is($path)) {
+		$attributes['class'] = isset($attributes['class']) ? $attributes['class'] . ' active' : 'active';
+	}
+	
+	return '<li' . HTML::attributes($attributes) . '>'
+			. '<a href="' . URL::to($path, $parameters) . '">' . $title . '</a>'
+		. '</li>';
+}
+
+/**
+ * Generate an HTML nav <li> link to a controller action.
+ *
+ * An array of parameters may be specified to fill in URI segment wildcards.
+ *
+ * <code>
+ *		// Generate a link to the "home@index" action
+ *		echo action_li('home@index', 'Home');
+ *
+ *		// Generate a link to the "user@profile" route and add some parameters
+ *		echo action_li('user@profile', 'Profile', array('ryan'));
+ * </code>
+ *
+ * @param  string  $action
+ * @param  string  $title
+ * @param  array   $parameters
+ * @param  array   $attributes
+ * @return string
+ */
+function action_li($action, $title = null, $parameters = array(), $attributes = array())
+{
+	$url = URL::action($action, $parameters);
+	$current = Request::url();
+	
+	if (Str::is($url, $current) || Str::is($url . '/*', $current)) {
+		$attributes['class'] = isset($attributes['class']) ? $attributes['class'] . ' active' : 'active';
+	}
+	
+	return '<li' . HTML::attributes($attributes) . '>'
+			. '<a href="' . $url . '">' . $title . '</a>'
+		. '</li>';
+}
+
+/**
+ * Custom validator to ensure a value is between a range of numeric values.
+ */
+Validator::extend('range', function($attribute, $value, $parameters)
+{
+	if (!is_numeric($value)) {
+		return false;
+	}
+	
+	return $value >= $parameters[0] and $value <= $parameters[1];
+});
+
+/**
+ * Get a value from Input, ensuring that it passes the passed in validation rules.
+ *
+ * @param string $key
+ * @param string $rules
+ * @param mixed  $default
+ * 
+ * @return mixed
+ */
+function valid_input($key, $rules, $default = null)
+{
+	$value = Input::get($key);
+	
+	if (is_null($value)) {
+		return $default;
+	}
+	
+	$validator = Validator::make(
+		array($key => $value),
+		array($key => $rules)
+	);
+	
+	if ($validator->fails()) {
+		return $default;
+	}
+	
+	return $value;
+}
+
+/**
+ * Get all custom headers queued for the final response.
+ *
+ * @return array
+ */
+function getHeaders()
+{
+	return empty($GLOBALS['custom_headers']) ? array() : $GLOBALS['custom_headers'];
+}
+
+/**
+ * Queue a custom header to be sent in the final response.
+ *
+ * @param string $name
+ * @param string $value
+ * 
+ * @return void
+ */
+function setHeader($name, $value)
+{
+	$GLOBALS['custom_headers'][$name] = $value;
+}
+
+/**
+ * Queue pagination headers to be sent in the final response.
+ * Return the collection from the pagination object.
+ *
+ * @param string $value
+ * 
+ * @return Collection
+ */
+function paginationResponse($pagination)
+{
+	setHeader('Pagination-Page', $pagination->getCurrentPage());
+	setHeader('Pagination-Num', $pagination->getPerPage());
+	setHeader('Pagination-Total', $pagination->getTotal());
+	setHeader('Pagination-Last-Page', $pagination->getLastPage());
+	return $pagination->getCollection();
+}
+
+/**
+ * Blade extensions to render javascript templates.
+ */
+$GLOBALS['js_templates'] = array();
+function startJsTemplate($section)
+{
+	ob_start();
+	echo "<script type='text/template' id='tpl-$section'>\n";
+}
+function stopJsTemplate()
+{
+	echo '</script>';
+	$GLOBALS['js_templates'][] = str_replace(array("\n", "\t"), ' ', preg_replace('~>\s+<~', '><', ob_get_clean()));
+}
+Blade::extend(function($view, $compiler)
+{
+	$pattern = $compiler->createMatcher('jstemplate');
+	return preg_replace($pattern, '$1<?php startJsTemplate($2); ?>', $view);
+});
+Blade::extend(function($view)
+{
+	return str_replace('@stopjstemplate', "<?php stopJsTemplate(); ?>", $view);
+});
+Blade::extend(function($view)
+{
+	return str_replace('@yieldjstemplates', "<?php echo implode(\"\\n\", \$GLOBALS['js_templates']) ?>", $view);
+});
+
+/**
+ * Blade extensions to render domready logic.
+ */
+$GLOBALS['domready_code'] = array();
+function startDomreadySection()
+{
+	ob_start();
+}
+function stopDomreadySection()
+{
+	$GLOBALS['domready_code'][] = ob_get_clean();
+}
+Blade::extend(function($view, $compiler)
+{
+	$pattern = $compiler->createMatcher('domready');
+	return preg_replace($pattern, '$1<?php startDomreadySection(); ?>', $view);
+});
+Blade::extend(function($view)
+{
+	return str_replace('@stopdomready', "<?php stopDomreadySection(); ?>", $view);
+});
+Blade::extend(function($view)
+{
+	return str_replace(
+		'@yielddomready',
+		"<?php "
+			. "foreach (\$GLOBALS['domready_code'] as \$code) {"
+				. "echo \"<script>\";"
+					. "echo \"\$(function () {\n\";"
+						. "echo \$code;"
+					. "echo \"});\";"
+				. "echo \"</script>\n\";"
+			. "}"
+		. " ?>",
+		$view
+	);
+});

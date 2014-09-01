@@ -1,0 +1,62 @@
+@import "../../mixins.less";
+@import "variables.less";
+
+/* GLOBAL */
+a:active, a:focus {
+	outline: none;
+}
+html, body {
+	background-color: #f3f3f3;
+}
+table {
+	width: 100%;
+}
+h1, h2, h3, h4 {
+	font-weight: 400;
+}
+.margin-top-xs {margin-top: 5px;}
+.margin-top-sm {margin-top: 10px;}
+.margin-top    {margin-top: 15px;}
+.margin-top-lg {margin-top: 30px;}
+.margin-top-xl {margin-top: 75px;}
+.padded-xs {padding: 5px;}
+.padded-sm {padding: 10px;}
+.padded    {padding: 15px;}
+.padded-lg {padding: 30px;}
+.padded-xl {padding: 75px;}
+.text-sm {font-size: 12px;}
+.text-lg {font-size: 16px;}
+.min-height-xs {min-height: 25px;}
+.min-height-sm {min-height: 50px;}
+.min-height {min-height: 100px;}
+.min-height-lg {min-height: 200px;}
+.min-height-xl {min-height: 400px;}
+.box {
+	background-color: #fff;
+	border: 1px solid #bbb;
+	border-radius: 5px;
+	box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.10);
+}
+
+/* CONTENT */
+.content {
+	padding-top: 51px;
+	
+	h1 {
+		margin-top: 0;
+	}
+}
+.noscript {
+	padding-top: 51px;
+}
+
+/* ERROR PAGES */
+.errorpage {
+	margin-top: 100px;
+	text-align: center;
+	
+	h2 {
+		font-size: 800%;
+		color: @gray-light;
+	}
+}

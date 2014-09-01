@@ -1,0 +1,57 @@
+{{ Casset::dependency('css/layouts/default/variables.less') }}
+{{ Casset::container('layout')->dependency('css/layouts/default/variables.less') }}
+
+{{ Casset::container('layout')->add('css/layouts/default/bootstrap.less') }}
+{{ Casset::container('layout')->add('css/layouts/default/layout.less') }}
+
+{{ Casset::container('layout')->add('jquery::/jquery.min.js') }}
+
+{{ Casset::container('layout')->add('bootstrap::/js/collapse.js') }}
+{{ Casset::container('layout')->add('bootstrap::/js/transition.js') }}
+{{ Casset::container('layout')->add('bootstrap::/js/dropdown.js') }}
+{{ Casset::container('layout')->add('bootstrap::/js/modal.js') }}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{{ company() }}} -  @yield('title')</title>
+	<meta name="description" content="@yield('description')">
+	<meta name="keywords" content="@yield('keywords')">
+	
+	{{ Casset::container('layout')->styles() }}
+	{{ Casset::container('default')->styles() }}
+	
+	<!--[if lt IE 9]>
+		<script src="{{ Casset::cdn('libs/html5shiv/html5shiv.min.js') }}"></script>
+		<script src="{{ Casset::cdn('libs/respond/respond.min.js') }}"></script>
+	<![endif]-->
+</head>
+<body>
+	<header id="top" class="navbar navbar-inverse navbar-fixed-top">
+		@include('layouts.default.navbar')
+		<div id="app-messenger" style="display:none;"></div>
+	</header>
+	
+	<noscript>
+		<div class="container noscript">
+			<div class="alert alert-danger margin-top-lg">
+				<strong>Error!</strong> JavaScript is required to view this site. Please enable JavaScript.
+			</div>
+		</div>
+	</noscript>
+	
+	<div class="content">
+		@yield('content')
+	</div>
+	
+	@yieldjstemplates
+	
+	{{ Casset::container('layout')->scripts() }}
+	{{ Casset::container('default')->scripts() }}
+	
+	@yielddomready
+</body>
+</html>

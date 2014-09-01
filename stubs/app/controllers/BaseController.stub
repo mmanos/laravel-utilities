@@ -1,0 +1,9 @@
+<?php
+
+/**
+ * Base controller.
+ */
+class BaseController extends Controller
+{
+	public function __construct() {}
+}

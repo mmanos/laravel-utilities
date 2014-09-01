@@ -1,0 +1,7 @@
+
+App::after(function($request, $response)
+{
+	foreach (getHeaders() as $name => $value) {
+		$response->headers->set($name, $value);
+	}
+});

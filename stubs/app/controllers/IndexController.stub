@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Index controller.
+ * 
+ * @author Mark Manos
+ */
+class IndexController extends BaseController
+{
+	/**
+	 * Index action.
+	 * 
+	 * @return View
+	 */
+	public function getIndex()
+	{
+		return View::make('index.index');
+	}
+}
