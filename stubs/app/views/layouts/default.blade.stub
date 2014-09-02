@@ -3,6 +3,7 @@
 
 {{ Casset::container('layout')->add('css/layouts/default/bootstrap.less') }}
 {{ Casset::container('layout')->add('css/layouts/default/layout.less') }}
+{{ Casset::container('layout')->add('libs/font-awesome/less/font-awesome.less') }}
 
 {{ Casset::container('layout')->add('jquery::/jquery.min.js') }}
 

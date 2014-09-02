@@ -73,11 +73,12 @@ class File
 	
 	/**
 	 * Return true if the given file contains the given search string.
+	 * False, otherwise.
 	 *
 	 * @param string $path
 	 * @param mixed  $search
 	 * 
-	 * @return mixed
+	 * @return boolean
 	 */
 	public static function has($path, $search)
 	{
@@ -121,6 +122,37 @@ class File
 		if (!copy($from, $to)) {
 			throw new Exception('Error copying file to: ' . $to);
 		}
+	}
+	
+	/**
+	 * Recursively copy a folder.
+	 *
+	 * @param string $from
+	 * @param string $to
+	 * 
+	 * @return void
+	 * @throws Exception
+	 */
+	public static function copy_folder($from, $to)
+	{
+		$dir = opendir($from);
+		
+		self::mkdir($to);
+		
+		while (false !== ($file = readdir($dir))) {
+			if ($file != '.' && $file != '..') {
+				if (is_dir($from.'/'.$file)) {
+					self::copy_folder($from.'/'.$file, $to.'/'.$file);
+				}
+				else {
+					if (!copy($from.'/'.$file, $to.'/'.$file)) {
+						throw new Exception('Error recur. copying file to: ' . $to . '/' . $file);
+					}
+				}
+			}
+		}
+		
+		closedir($dir);
 	}
 	
 	/**

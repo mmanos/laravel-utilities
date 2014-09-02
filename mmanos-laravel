@@ -7,5 +7,6 @@ require __DIR__.'/../../autoload.php';
 $app = new Symfony\Component\Console\Application('Custom Laravel Utilities', '1.0');
 $app->add(new Mmanos\Installer\Console\NewCommand);
 $app->add(new Mmanos\Installer\Console\PrepareCommand);
+$app->add(new Mmanos\Installer\Console\FrontendCommand);
 
 $app->run();

@@ -15,7 +15,7 @@ function dar($value)
 }
 
 /**
- * Return the name of the company.
+ * Return the name of the site/company.
  */
 function company()
 {
@@ -150,7 +150,7 @@ function setHeader($name, $value)
 }
 
 /**
- * Queue pagination headers to be sent in the final response.
+ * Queue pagination headers to be sent in the final response of an API call.
  * Return the collection from the pagination object.
  *
  * @param string $value
@@ -195,7 +195,7 @@ Blade::extend(function($view)
 });
 
 /**
- * Blade extensions to render domready logic.
+ * Blade extensions to render javascript code on domready.
  */
 $GLOBALS['domready_code'] = array();
 function startDomreadySection()
