@@ -1,0 +1,35 @@
+<?php
+
+class Role extends Model
+{
+	/**
+	 * The database table used by the model.
+	 *
+	 * @var string
+	 */
+	protected $table = 'roles';
+	
+	/**
+	 * The attributes excluded from the model's JSON form.
+	 *
+	 * @var array
+	 */
+	protected $hidden = array('updated_at');
+	
+	/**
+	 * The attributes that aren't mass assignable.
+	 *
+	 * @var array
+	 */
+	protected $guarded = array('id');
+	
+	/**
+	 * Return all users that belong to this role.
+	 *
+	 * @return Collection
+	 */
+	public function users()
+	{
+		return $this->belongsToMany('User', 'user_roles')->withTimestamps();
+	}
+}

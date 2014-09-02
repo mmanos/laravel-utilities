@@ -1,0 +1,42 @@
+@extends('layouts.default')
+@section('title') Forgot Password @stop
+
+@section('content')
+	<div class="container margin-top-lg">
+		<div class="row">
+			<div class="col-md-4 col-md-offset-4">
+				@include('common.alerts')
+				
+				<h3 class="text-center">Reset Your Password</h3>
+				
+				{{ Form::open(array('action' => 'AuthController@postForgot', 'class' => 'box padded margin-top-lg')) }}
+					<p>Forgot your password? Enter your email address to reset it.</p>
+					
+					<fieldset class="margin-top">
+						<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
+							{{ Form::label('email', 'Email Address') }}
+							{{ Form::text('email', Input::old('email'), array('autofocus' => 'autofocus', 'class' => 'form-control')) }}
+							{{ $errors->first('email', '<span class="help-block">:message</span>') }}
+						</div>
+						
+						{{ $redir ? Form::hidden('redir', $redir) : '' }}
+						
+						<div class="form-group">
+							{{ Form::submit('Send Email', array('class' => 'btn btn-primary')) }}
+						</div>
+					</fieldset>
+				{{ Form::close() }}
+				
+				<div class="text-center text-muted margin-top">
+					Never mind?
+					
+					@if ($redir && '/' !== $redir)
+						<a href="{{ action('AuthController@getLogin', array('redir' => $redir)) }}">Log in</a>
+					@else
+						<a href="{{ action('AuthController@getLogin') }}">Log in</a>
+					@endif
+				</div>
+			</div>
+		</div>
+	</div>
+@stop

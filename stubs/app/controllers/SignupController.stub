@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * Signup controller.
+ * 
+ * @author Mark Manos
+ */
+class SignupController extends BaseController
+{
+	/**
+	 * Index action.
+	 *
+	 * @return View
+	 */
+	public function getIndex()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		return View::make('signup.index', array(
+			'redir' => $redir,
+		));
+	}
+	
+	/**
+	 * Index POST action.
+	 *
+	 * @return Redirect
+	 */
+	public function postIndex()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		$validator = Validator\User::create(Input::all());
+		if ($validator->fails()) {
+			return Redirect::action('SignupController@getIndex')
+				->with('error', 'There was a problem with your submission.')
+				->onlyInput('first_name', 'last_name', 'email', 'redir')
+				->withErrors($validator);
+		}
+		
+		$account = Service\User::create(
+			Input::get('email'),
+			Input::get('password'),
+			Input::get('first_name'),
+			Input::get('last_name')
+		);
+		
+		Auth::attempt(array(
+			'email'    => Input::get('email'),
+			'password' => Input::get('password'),
+		));
+		
+		return Redirect::to($redir);
+	}
+}

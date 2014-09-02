@@ -39,12 +39,13 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 			->installFontAwesome($directory, $output)
 			->installIEResponsive($directory, $output)
 			->createLayout($directory, $output)
-			->configureMVC($directory, $output);
+			->configureMVC($directory, $output)
+			->createEmailLayout($directory, $output);
 		
 		exec('composer dump-autoload', $out);
 		echo implode("\n", $out) . "\n";
 		
-		$output->writeln('<comment>Application preapred!</comment>');
+		$output->writeln('<comment>Front end installed!</comment>');
 	}
 	
 	/**
@@ -85,7 +86,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 		}
 		
 		if (!File::has($directory.'/app/config/app.php', 'Mmanos\Casset\CassetServiceProvider')) {
-			File::replace_once(
+			File::replaceOnce(
 				$directory.'/app/config/app.php',
 				"'Illuminate\Workbench\WorkbenchServiceProvider',",
 				"'Illuminate\Workbench\WorkbenchServiceProvider',\n\t\t'Mmanos\Casset\CassetServiceProvider',"
@@ -93,7 +94,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 		}
 		
 		if (!File::has($directory.'/app/config/app.php', "'Casset'")) {
-			File::replace_once(
+			File::replaceOnce(
 				$directory.'/app/config/app.php',
 				"=> 'Illuminate\Support\Facades\View',",
 				"=> 'Illuminate\Support\Facades\View',\n\t\t'Casset'          => 'Mmanos\Casset\Casset',"
@@ -162,7 +163,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 	protected function installFontAwesome($directory, $output)
 	{
 		if (!File::exists($directory.'/public/assets/libs/font-awesome')) {
-			File::copy_folder(
+			File::copyFolder(
 				dirname(__FILE__).'/../stubs/public/assets/libs/font-awesome',
 				$directory.'/public/assets/libs/font-awesome'
 			);
@@ -215,47 +216,40 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function createLayout($directory, $output)
 	{
-		if (!File::exists($directory.'/app/views/layouts/default.blade.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/views/layouts/default.blade.stub',
-				$directory.'/app/views/layouts/default.blade.php'
-			);
-		}
-		if (!File::exists($directory.'/app/views/layouts/default/navbar.blade.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/views/layouts/default/navbar.blade.stub',
-				$directory.'/app/views/layouts/default/navbar.blade.php'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/layouts/default.blade.stub',
+			$directory.'/app/views/layouts/default.blade.php'
+		);
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/layouts/default/navbar.blade.stub',
+			$directory.'/app/views/layouts/default/navbar.blade.php'
+		);
 		
-		if (!File::exists($directory.'/public/assets/css/mixins.less')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/public/assets/css/mixins.stub',
-				$directory.'/public/assets/css/mixins.less'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/common/alerts.blade.stub',
+			$directory.'/app/views/common/alerts.blade.php'
+		);
+		
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/public/assets/css/mixins.stub',
+			$directory.'/public/assets/css/mixins.less'
+		);
 		
 		File::mkdir($directory.'/public/assets/css/layouts');
 		File::mkdir($directory.'/public/assets/css/layouts/default');
 		
-		if (!File::exists($directory.'/public/assets/css/layouts/default/variables.less')) {
-			File::copy(
-				$directory.'/vendor/twbs/bootstrap/less/variables.less',
-				$directory.'/public/assets/css/layouts/default/variables.less'
-			);
-		}
-		if (!File::exists($directory.'/public/assets/css/layouts/default/bootstrap.less')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/public/assets/css/layouts/default/bootstrap.stub',
-				$directory.'/public/assets/css/layouts/default/bootstrap.less'
-			);
-		}
-		if (!File::exists($directory.'/public/assets/css/layouts/default/layout.less')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/public/assets/css/layouts/default/layout.stub',
-				$directory.'/public/assets/css/layouts/default/layout.less'
-			);
-		}
+		File::copyIfNone(
+			$directory.'/vendor/twbs/bootstrap/less/variables.less',
+			$directory.'/public/assets/css/layouts/default/variables.less'
+		);
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/public/assets/css/layouts/default/bootstrap.stub',
+			$directory.'/public/assets/css/layouts/default/bootstrap.less'
+		);
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/public/assets/css/layouts/default/layout.stub',
+			$directory.'/public/assets/css/layouts/default/layout.less'
+		);
 		
 		$output->writeln('default layout created');
 		
@@ -275,46 +269,36 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 		File::delete($directory.'/app/controllers/HomeController.php');
 		File::delete($directory.'/app/views/hello.php');
 		
-		if (!File::exists($directory.'/app/controllers/IndexController.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/controllers/IndexController.stub',
-				$directory.'/app/controllers/IndexController.php'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/controllers/IndexController.stub',
+			$directory.'/app/controllers/IndexController.php'
+		);
 		
 		File::put(
 			$directory.'/app/controllers/BaseController.php',
 			File::get(dirname(__FILE__).'/../stubs/app/controllers/BaseController.stub')
 		);
 		
-		if (!File::exists($directory.'/app/views/index/index.blade.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/views/index/index.blade.stub',
-				$directory.'/app/views/index/index.blade.php'
-			);
-		}
-		if (!File::exists($directory.'/app/views/error/index.blade.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/views/error/index.blade.stub',
-				$directory.'/app/views/error/index.blade.php'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/index/index.blade.stub',
+			$directory.'/app/views/index/index.blade.php'
+		);
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/error/index.blade.stub',
+			$directory.'/app/views/error/index.blade.php'
+		);
 		
 		File::mkdir($directory.'/public/assets/css/controllers');
 		File::mkdir($directory.'/public/assets/js/controllers');
 		
-		if (!File::exists($directory.'/public/assets/css/controllers/index/index.less')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/public/assets/css/controllers/index/index.stub',
-				$directory.'/public/assets/css/controllers/index/index.less'
-			);
-		}
-		if (!File::exists($directory.'/public/assets/js/controllers/index/index.js')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/public/assets/js/controllers/index/index.stub',
-				$directory.'/public/assets/js/controllers/index/index.js'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/public/assets/css/controllers/index/index.stub',
+			$directory.'/public/assets/css/controllers/index/index.less'
+		);
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/public/assets/js/controllers/index/index.stub',
+			$directory.'/public/assets/js/controllers/index/index.js'
+		);
 		
 		File::replace(
 			$directory.'/app/routes.php',
@@ -323,6 +307,26 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 		);
 		
 		$output->writeln('mvc configured');
+		
+		return $this;
+	}
+	
+	/**
+	 * Create a default email layout.
+	 *
+	 * @param string          $directory
+	 * @param OutputInterface $output
+	 * 
+	 * @return $this
+	 */
+	protected function createEmailLayout($directory, $output)
+	{
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/views/emails/layouts/default.blade.stub',
+			$directory.'/app/views/emails/layouts/default.blade.php'
+		);
+		
+		$output->writeln('default email layout created');
 		
 		return $this;
 	}

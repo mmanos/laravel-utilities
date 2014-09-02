@@ -1,0 +1,34 @@
+<?php namespace Event\User;
+
+use Mail;
+
+/**
+ * User Auth event subscribers.
+ */
+class Auth
+{
+	/**
+     * Register the listeners for the subscriber.
+     *
+     * @param \Illuminate\Events\Dispatcher $events
+     * 
+     * @return void
+     */
+	public function subscribe($events)
+	{
+		$events->listen('user.auth.forgotPassword', 'Event\User\Auth@sendForgotEmail');
+	}
+	
+	/**
+     * Send the forgot password email when a forgot token is generated.
+     */
+	public function sendForgotEmail(\User $user, $token)
+	{
+		Mail::queue('emails.auth.forgot', array(
+			'user'  => array('first_name' => $user->first_name),
+			'token' => $token,
+		), function ($message) use ($user) {
+			$message->to($user->email, $user->name)->subject('Forgot Password');
+		});
+	}
+}

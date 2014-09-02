@@ -1,6 +1,6 @@
 # Custom Utilities for Laravel 4
 
-This package contains custom Laravel application utilities and installer to make initialization, configuration, and management of new Laravel 4 applications easier and less time consuming.
+This package contains custom Laravel application utilities to make installation, configuration, and management of Laravel 4 applications easier and less time consuming.
 
 The changes made by this package are highly opinionated and are not suitable for everyone.
 
@@ -60,12 +60,16 @@ For instance, `mmanos-laravel new blog` would create a directory named `blog` co
 Prepare a fresh version of Laravel by adding helpful functionality. This command will do the following:
 
 * Create app/classes directory and autoload it
+* Configure local environment detection
 * Install helper functions file
 * Configure event callbacks
 * Configure the HTTP Exceptions handler
 * Enable sending of custom headers in response
 * Set app timezone to America/Chicago
 * Configure a common site/company name for use throughout the app
+* Create a custom model class for other models to extend
+* Ignore local config files in Git
+* Add Carbon class alias
 
 ```console
 $ mmanos-laravel prepare
@@ -85,9 +89,25 @@ Configure an existing Laravel application with helpful front-end functionality. 
 * Enable IE8 responsive css support (via html5shiv.js and respond.js)
 * Create a default layout
 * Configure default controllers and views
+* Create a default email layout
 
 ```console
 $ mmanos-laravel frontend
+```
+
+> **Note:** Run from the base directory of the Laravel application.
+
+#### Authorize
+
+Configure an existing Laravel application with authorization functionality. This command will do the following:
+
+* Create user migrations, models, services, validators, and event handlers
+* Create an auth controller along with it's resources
+* Create a signup controller along with it's resources
+* Install ACL functionality built on the [zendframework/zend-permissions-acl](http://framework.zend.com/manual/2.2/en/modules/zend.permissions.acl.intro.html) package
+
+```console
+$ mmanos-laravel authorize
 ```
 
 > **Note:** Run from the base directory of the Laravel application.

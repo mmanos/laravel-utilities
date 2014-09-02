@@ -8,5 +8,6 @@ $app = new Symfony\Component\Console\Application('Custom Laravel Utilities', '1.
 $app->add(new Mmanos\Installer\Console\NewCommand);
 $app->add(new Mmanos\Installer\Console\PrepareCommand);
 $app->add(new Mmanos\Installer\Console\FrontendCommand);
+$app->add(new Mmanos\Installer\Console\AuthorizeCommand);
 
 $app->run();

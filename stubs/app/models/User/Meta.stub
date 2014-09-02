@@ -1,0 +1,37 @@
+<?php namespace User;
+
+use Model;
+
+class Meta extends Model
+{
+	/**
+	 * The database table used by the model.
+	 *
+	 * @var string
+	 */
+	protected $table = 'user_metas';
+	
+	/**
+	 * The attributes excluded from the model's JSON form.
+	 *
+	 * @var array
+	 */
+	protected $hidden = array('user_id', 'updated_at');
+	
+	/**
+	 * The attributes that aren't mass assignable.
+	 *
+	 * @var array
+	 */
+	protected $guarded = array('id');
+	
+	/**
+	 * Return the User model this belongs to.
+	 *
+	 * @var \User
+	 */
+	public function user()
+	{
+		return $this->belongsTo('User');
+	}
+}

@@ -1,0 +1,85 @@
+<?php namespace Service\User;
+
+use Event, Str, Config;
+
+/**
+ * The User Auth service.
+ */
+class Auth
+{
+	/**
+	 * Generate a forgot password token for the given user and return it.
+	 *
+	 * @param \User $user User model.
+	 * 
+	 * @return string
+	 */
+	public static function forgotPassword(\User $user)
+	{
+		$token = Str::random(20);
+		
+		if (!$meta = $user->metas()->where('name', 'auth_reset_token')->first()) {
+			$meta = new \User\Meta(array(
+				'user_id' => $user->id,
+				'name'    => 'auth_reset_token',
+			));
+		}
+		
+		$meta->value = $token;
+		$meta->save();
+		
+		Event::fire('user.auth.forgotPassword', array($user, $token));
+		
+		return $token;
+	}
+	
+	/**
+	 * Look up a user from the given forgot password token.
+	 *
+	 * @param string $token Reset password token.
+	 * 
+	 * @return \User|false
+	 */
+	public static function userFromToken($token)
+	{
+		$meta = \User\Meta::where('name', 'auth_reset_token')
+			->where('value', $token)
+			->first();
+		
+		if (!$meta) {
+			return false;
+		}
+		
+		$expires = Config::get('auth.reset_token_expires', 604800);
+		if (time() - strtotime($meta->created_at) >= $expires) {
+			return false;
+		}
+		
+		if (!$user = \User::find($meta->user_id)) {
+			return false;
+		}
+		
+		return $user;
+	}
+	
+	/**
+	 * Reset the given user's password. Clear any reset tokens.
+	 * This method will hash the password.
+	 *
+	 * @param \User  $user     User model.
+	 * @param string $password New password (in plain text).
+	 * 
+	 * @return void
+	 */
+	public static function reset(\User $user, $password)
+	{
+		\Service\User::update($user, array(
+			'password' => $password,
+			'metas'    => array(
+				'auth_reset_token' => null,
+			),
+		));
+		
+		Event::fire('user.auth.reset', array($user, $password));
+	}
+}

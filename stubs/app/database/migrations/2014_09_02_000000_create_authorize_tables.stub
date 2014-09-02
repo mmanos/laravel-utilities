@@ -1,0 +1,79 @@
+<?php
+
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateAuthorizeTables extends Migration
+{
+	/**
+	 * Run the migrations.
+	 *
+	 * @return void
+	 */
+	public function up()
+	{
+		Schema::create('users', function ($table) {
+			$table->increments('id');
+			$table->string('email');
+			$table->string('password');
+			$table->string('remember_token')->nullable();
+			$table->string('permissions');
+			$table->timestamps();
+			$table->softDeletes();
+			
+			$table->unique('email');
+			$table->index(array('created_at', 'deleted_at', 'permissions'), 'recent_users');
+		});
+		
+		Schema::create('user_metas', function ($table) {
+			$table->increments('id');
+			$table->integer('user_id')->unsigned();
+			$table->string('name');
+			$table->text('value')->nullable();
+			$table->timestamps();
+			
+			$table->unique(array('user_id', 'name'));
+			$table->index('name');
+		});
+		
+		Schema::create('roles', function ($table) {
+			$table->increments('id');
+			$table->string('name');
+			$table->timestamps();
+			
+			$table->unique('name');
+		});
+		
+		Schema::create('user_roles', function ($table) {
+			$table->integer('user_id')->unsigned();
+			$table->integer('role_id')->unsigned();
+			$table->timestamps();
+			
+			$table->unique(array('user_id', 'role_id'));
+		});
+		
+		DB::table('roles')->insertGetId(array(
+			'name'       => 'admin',
+			'created_at' => date('Y-m-d H:i:s'),
+			'updated_at' => date('Y-m-d H:i:s'),
+		));
+		DB::table('roles')->insertGetId(array(
+			'name'       => 'moderator',
+			'created_at' => date('Y-m-d H:i:s'),
+			'updated_at' => date('Y-m-d H:i:s'),
+		));
+	}
+	
+	/**
+	 * Reverse the migrations.
+	 *
+	 * @return void
+	 */
+	public function down()
+	{
+		Schema::drop('users');
+		Schema::drop('user_metas');
+		Schema::drop('roles');
+		Schema::drop('user_roles');
+	}
+}

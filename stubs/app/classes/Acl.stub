@@ -1,0 +1,184 @@
+<?php
+
+use Zend\Permissions\Acl\Role\GenericRole as Role;
+use Zend\Permissions\Acl\Resource\GenericResource as Resource;
+use Zend\Permissions\Acl\Resource\ResourceInterface;
+
+/**
+ * Acl class extends from Zend Acl.
+ */
+class Acl extends Zend\Permissions\Acl\Acl
+{
+	/**
+	 * Singleton instance.
+	 *
+	 * @var Acl
+	 */
+	public static $_instance = null;
+	
+	/**
+	 * Array of configuration arrays loaded by this instance.
+	 *
+	 * @var array
+	 */
+	protected $_configs = array();
+	
+	/**
+	 * Get singleton instance.
+	 *
+	 * @return Acl
+	 */
+	public static function instance()
+	{
+		if (null === static::$_instance) {
+			static::$_instance = new static;
+		}
+		
+		return static::$_instance;
+	}
+	
+	/**
+	 * Returns true if and only if the Role has access to the Resource.
+	 * 
+	 * This is a wrapper around the isAllowed() method. It does these additional things:
+	 * - Accepts a model as a resource. The 'permissions' property (if available) will
+	 *   then be used as the resource string.
+	 *
+	 * @param ResourceInterface|object|string $resource
+	 * @param string                          $privilege
+	 * @param RoleInterface|string|mixed|User $role
+	 * 
+	 * @return boolean
+	 */
+	public function isAllowed($resource = null, $privilege = null, $role = null)
+	{
+		// Fetch roles from a user/guest, if needed.
+		if (null === $role || $role instanceof User) {
+			$roles   = array();
+			
+			foreach ($this->_configs as $config) {
+				if (empty($config['user_roles']) || !$config['user_roles'] instanceof Closure) {
+					continue;
+				}
+				
+				$roles = array_merge(
+					$roles,
+					(array) $config['user_roles']($role, $resource)
+				);
+			}
+			
+			// Use user roles, if found.
+			$role = empty($roles) ? null : $roles;
+		}
+		
+		// Make sure we have an array to work with.
+		$roles = is_array($role) ? $role : array($role);
+		
+		// Handle object resources.
+		if (is_object($resource)) {
+			// Use permissions field, if available.
+			if (isset($resource->permissions)) {
+				$resource = $resource->permissions;
+			}
+			else if (!$resource instanceof ResourceInterface) {
+				// Invalid object passed.
+				$resource = null;
+			}
+		}
+		
+		// Try each role until one is found to be allowed.
+		foreach ($roles as $r) {
+			if (parent::isAllowed($r, $resource, $privilege)) {
+				return true;
+			}
+		}
+		
+		// No roles allowed, return false.
+		return false;
+	}
+	
+	/**
+	 * Returns true if and only if the Role has access to the Resource.
+	 *
+	 * @param ResourceInterface|object|string $resource
+	 * @param string                          $privilege
+	 * @param RoleInterface|string|mixed|User $role
+	 * 
+	 * @return boolean
+	 */
+	public static function allowed($resource = null, $privilege = null, $role = null)
+	{
+		// Use authenticated user if no role is passed.
+		if (null === $role) {
+			$role = Auth::user();
+		}
+		
+		return static::instance()->isAllowed($resource, $privilege, $role);
+	}
+	
+	/**
+	 * Check to see if the given role has access to the given resource.
+	 * Throw a 403 error, if not.
+	 *
+	 * @param ResourceInterface|object|string $resource
+	 * @param string                          $privilege
+	 * @param RoleInterface|string|mixed|User $role
+	 * 
+	 * @return void
+	 */
+	public static function allowedOrFail($resource = null, $privilege = null, $role = null)
+	{
+		if (!static::allowed($resource, $privilege, $role)) {
+			App::abort(403);
+		}
+	}
+	
+	/**
+	 * Load configuration options from the given array.
+	 *
+	 * @param array $config
+	 * 
+	 * @return Acl
+	 */
+	public function load(array $config)
+	{
+		// Add roles.
+		if (!empty($config['roles']) && is_array($config['roles'])) {
+			foreach ($config['roles'] as $key => $value) {
+				$role = $key;
+				$parent = $value;
+				
+				if (is_int($role)) {
+					$role = $value;
+					$parent = null;
+				}
+				
+				$this->addRole(new Role($role), $parent);
+			}
+		}
+		
+		// Add resources.
+		if (!empty($config['resources']) && is_array($config['resources'])) {
+			foreach ($config['resources'] as $key => $value) {
+				$resource = $key;
+				$parent = $value;
+				
+				if (is_int($resource)) {
+					$resource = $value;
+					$parent = null;
+				}
+				
+				$this->addResource(new Resource($resource), $parent);
+			}
+		}
+		
+		// Assign rules.
+		if (!empty($config['rules']) && $config['rules'] instanceof Closure) {
+			$config['rules']($this);
+		}
+		
+		$this->_configs[] = $config;
+		
+		return $this;
+	}
+}

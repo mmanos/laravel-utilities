@@ -1,0 +1,167 @@
+<?php namespace Service;
+
+use Event, Hash, Str;
+
+/**
+ * The User service.
+ */
+class User
+{
+	/**
+	 * Create a new User.
+	 *
+	 * @param string  $email      Email.
+	 * @param string  $password   Password
+	 * @param string  $first_name First name.
+	 * @param string  $last_name  Last name.
+	 * @param array   $options    Array of optional parameters:
+	 *                            - permissions
+	 *                            - enc_password
+	 *                            - metas
+	 *                            - roles
+	 * 
+	 * @return \User
+	 */
+	public static function create($email, $password, $first_name, $last_name, array $options = array())
+	{
+		if (empty($options['metas']) || !is_array($options['metas'])) {
+			$options['metas'] = array();
+		}
+		
+		$user = new \User(array(
+			'email'       => $email,
+			'password'    => Hash::make($password),
+			'permissions' => 'public',
+		));
+		
+		if (!empty($options['permissions'])) {
+			$user->permissions = $options['permissions'];
+		}
+		
+		if (!empty($options['enc_password'])) {
+			$user->password = $options['enc_password'];
+		}
+		
+		$user->save();
+		
+		$options['metas']['first_name'] = $first_name;
+		$options['metas']['last_name']  = $last_name;
+		
+		foreach ($options['metas'] as $name => $value) {
+			$user->metas()->save(new \User\Meta(array(
+				'name'  => $name,
+				'value' => $value,
+			)));
+		}
+		
+		if (!empty($options['roles']) && is_array($options['roles'])) {
+			foreach ($options['roles'] as $role) {
+				$user->roles()->attach(
+					\Role::where('name', $role)->first()
+				);
+			}
+		}
+		
+		Event::fire('user.create', array($user, $password, $options));
+		
+		return $user;
+	}
+	
+	/**
+	 * Update a User.
+	 *
+	 * @param \User $user    User model.
+	 * @param array $options Array of optional parameters:
+	 *                       - email
+	 *                       - first_name
+	 *                       - last_name
+	 *                       - permissions
+	 *                       - password
+	 *                       - metas
+	 *                       - remove_roles
+	 *                       - add_roles
+	 * 
+	 * @return void
+	 */
+	public static function update(\User $user, array $options = array())
+	{
+		if (!empty($options['email'])) {
+			$user->email = $options['email'];
+		}
+		
+		if (!empty($options['permissions'])) {
+			$user->permissions = $options['permissions'];
+		}
+		
+		if (!empty($options['password'])) {
+			$user->password = Hash::make($options['password']);
+		}
+		
+		$user->save();
+		
+		if (!empty($options['first_name'])) {
+			$options['metas']['first_name'] = $options['first_name'];
+		}
+		if (!empty($options['last_name'])) {
+			$options['metas']['last_name']  = $options['last_name'];
+		}
+		
+		if (!empty($options['metas']) && is_array($options['metas'])) {
+			foreach ($options['metas'] as $name => $value) {
+				if (null === $value) {
+					if ($meta = $user->metas()->where('name', $name)->first()) {
+						$meta->delete();
+					}
+					
+					continue;
+				}
+				
+				if (!$meta = $user->metas()->where('name', $name)->first()) {
+					$meta = new \User\Meta(array(
+						'user_id' => $user->id,
+						'name'    => $name,
+					));
+				}
+				
+				$meta->value = $value;
+				$meta->save();
+			}
+		}
+		
+		if (!empty($options['remove_roles']) && is_array($options['remove_roles'])) {
+			foreach ($options['remove_roles'] as $remove) {
+				if ($role = $user->roles()->where('name', $remove)->first()) {
+					$user->roles()->detach($role);
+				}
+			}
+		}
+		
+		if (!empty($options['add_roles']) && is_array($options['add_roles'])) {
+			foreach ($options['add_roles'] as $add) {
+				if ($role = $user->roles()->where('name', $add)->first()) {
+					continue;
+				}
+				
+				$user->roles()->attach(
+					\Role::where('name', $add)->first()
+				);
+			}
+		}
+		
+		Event::fire('user.update', array($user, $options));
+	}
+	
+	/**
+	 * Delete a User.
+	 *
+	 * @param \User $user User model.
+	 * 
+	 * @return void
+	 */
+	public static function delete(\User $user)
+	{
+		$user->delete();
+		
+		Event::fire('user.delete', array($user));
+	}
+}

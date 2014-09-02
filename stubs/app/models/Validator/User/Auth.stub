@@ -1,0 +1,63 @@
+<?php namespace Validator\User;
+
+use Validator;
+
+/**
+ * User Auth validator(s).
+ */
+class Auth
+{
+	/**
+	 * Default messages for this class.
+	 *
+	 * @var array
+	 */
+	public static $messages = array(
+		'email_exists' => 'This user was not found.',
+	);
+	
+	/**
+	 * Login validator.
+	 *
+	 * @return Validator
+	 */
+	public static function login(array $input, array $rules = array(), array $messages = array())
+	{
+		$rules = array_merge($rules, array(
+			'email'    => 'required|email',
+			'password' => 'required',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+	
+	/**
+	 * Forgot password validator.
+	 *
+	 * @return Validator
+	 */
+	public static function forgot(array $input, array $rules = array(), array $messages = array())
+	{
+		\Validator\User::registerEmailExists();
+		
+		$rules = array_merge($rules, array(
+			'email' => 'required|email|email_exists',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+	
+	/**
+	 * Reset password validator.
+	 *
+	 * @return Validator
+	 */
+	public static function resetPassword(array $input, array $rules = array(), array $messages = array())
+	{
+		$rules = array_merge($rules, array(
+			'password' => 'required|min:8|confirmed',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+}

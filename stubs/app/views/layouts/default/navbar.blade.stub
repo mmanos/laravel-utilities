@@ -16,7 +16,7 @@
 						<span class="caret"></span>
 					</a>
 					<ul class="dropdown-menu" role="menu">
-						{{ url_li('account', 'My Account') }}
+						{{ url_li('account', 'Settings') }}
 						{{ url_li('logout', 'Logout') }}
 					</ul>
 				</li>

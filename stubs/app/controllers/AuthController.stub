@@ -1,0 +1,201 @@
+<?php
+
+/**
+ * Auth controller.
+ * 
+ * @author Mark Manos
+ */
+class AuthController extends BaseController
+{
+	/**
+	 * Login action.
+	 *
+	 * @return View
+	 */
+	public function getLogin()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		return View::make('auth.login', array(
+			'redir' => $redir,
+		));
+	}
+	
+	/**
+	 * Login POST action.
+	 *
+	 * @return Redirect
+	 */
+	public function postLogin()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		$validator = Validator\User\Auth::login(Input::all());
+		if ($validator->fails()) {
+			return Redirect::action('AuthController@getLogin')
+				->with('error', 'There was a problem with your submission.')
+				->onlyInput('email', 'redir', 'remember')
+				->withErrors($validator);
+		}
+		
+		$credentials = array(
+			'email'    => Input::get('email'),
+			'password' => Input::get('password'),
+		);
+		
+		if (!Auth::attempt($credentials, (bool) Input::get('remember'))) {
+			return Redirect::action('AuthController@getLogin')
+				->with('error', 'Invalid email or password.')
+				->onlyInput('email', 'redir', 'remember');
+		}
+		
+		return Redirect::to($redir);
+	}
+	
+	/**
+	 * Logout action.
+	 *
+	 * @return Redirect
+	 */
+	public function getLogout()
+	{
+		if (Auth::check()) {
+			Auth::logout();
+		}
+		
+		return Redirect::to(Input::get('redir', '/'));
+	}
+	
+	/**
+	 * Forgot action. Show form to begin forgot password flow.
+	 *
+	 * @return View
+	 */
+	public function getForgot()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		return View::make('auth.forgot', array(
+			'redir' => $redir,
+		));
+	}
+	
+	/**
+	 * Forgot POST action. Email reset url to given address.
+	 *
+	 * @return Redirect
+	 */
+	public function postForgot()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		$validator = Validator\User\Auth::forgot(Input::all());
+		if ($validator->fails()) {
+			return Redirect::action('AuthController@getForgot')
+				->with('error', 'There was a problem with your submission.')
+				->onlyInput('email', 'redir')
+				->withErrors($validator);
+		}
+		
+		$user = User::where('email', Input::get('email'))->first();
+		
+		Service\User\Auth::forgotPassword($user);
+		
+		if ($redir && '/' !== $redir) {
+			return Redirect::action('AuthController@getLogin', array('redir' => $redir))->with('success',
+				'You will receive an email with instructions on how to reset '
+				. 'your password in a few minutes.'
+			);
+		}
+		
+		return Redirect::action('AuthController@getLogin')->with('success',
+			'You will receive an email with instructions on how to reset '
+			. 'your password in a few minutes.'
+		);
+	}
+	
+	/**
+	 * Reset action. Show form to let user reset their password.
+	 *
+	 * @param string $token
+	 * 
+	 * @return View
+	 */
+	public function getReset($token = null)
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		if (!$token) {
+			App::abort(404);
+		}
+		
+		if (!Service\User\Auth::userFromToken($token)) {
+			App::abort(404);
+		}
+		
+		return View::make('auth.reset', array(
+			'token' => $token,
+		));
+	}
+	
+	/**
+	 * Reset POST action. Reset a user's password.
+	 * 
+	 * @return Redirect
+	 */
+	public function postReset()
+	{
+		$redir = Input::get('redir', Input::old('redir', '/'));
+		
+		if (Auth::check()) {
+			return Redirect::to($redir);
+		}
+		
+		$token = Input::get('token');
+		if (!$token) {
+			App::abort(404);
+		}
+		
+		if (!$user = Service\User\Auth::userFromToken($token)) {
+			App::abort(404);
+		}
+		
+		$validator = Validator\User\Auth::resetPassword(Input::all());
+		if ($validator->fails()) {
+			return Redirect::action('AuthController@getReset', array($token))
+				->with('error', 'There was a problem with your submission.')
+				->withErrors($validator);
+		}
+		
+		Service\User\Auth::reset($user, Input::get('password'));
+		
+		Auth::attempt(array(
+			'email'    => $user->email,
+			'password' => Input::get('password'),
+		));
+		
+		return Redirect::to($redir)->with('success',
+			'Your password has been reset! You are now logged in.'
+		);
+	}
+}

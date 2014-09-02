@@ -1,0 +1,15 @@
+
+/*
+|--------------------------------------------------------------------------
+| ACL Filter
+|--------------------------------------------------------------------------
+|
+| The ACL filter is responsible for restricting access to resources for
+| users who should not be allowed access.
+|
+*/
+
+Route::filter('acl', function($route, $request, $resource = null, $privilege = null)
+{
+	Acl::allowedOrFail($resource, $privilege);
+});

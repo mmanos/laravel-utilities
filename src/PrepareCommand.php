@@ -33,12 +33,16 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 		$directory = getcwd();
 		
 		$this->createClassesDir($directory, $output)
+			->configureEnvDetection($directory, $output)
 			->installHelpers($directory, $output)
 			->configureEventCallbacks($directory, $output)
 			->configureHttpExceptionsHandler($directory, $output)
 			->configureResponseHeaders($directory, $output)
 			->setTimezone($directory, $output)
-			->setCompany($directory, $output);
+			->setCompany($directory, $output)
+			->createCustomModel($directory, $output)
+			->ignoreLocalConfigs($directory, $output)
+			->addCarbonAlias($directory, $output);
 		
 		exec('composer dump-autoload', $out);
 		echo implode("\n", $out) . "\n";
@@ -59,19 +63,40 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 		File::mkdir($directory.'/app/classes');
 		File::gitkeep($directory.'/app/classes');
 		
-		File::replace_once(
+		File::replaceOnce(
 			$directory.'/app/start/global.php',
 			"app_path().'/models',",
 			"app_path().'/models',\n\tapp_path().'/classes',"
 		);
 		
-		File::replace_once(
+		File::replaceOnce(
 			$directory.'/composer.json',
 			"\"app/models\",",
 			"\"app/models\",\n\t\t\t\"app/classes\","
 		);
 		
 		$output->writeln('app/classes directory created and autoloaded');
+		
+		return $this;
+	}
+	
+	/**
+	 * Configure local environment detection.
+	 *
+	 * @param string          $directory
+	 * @param OutputInterface $output
+	 * 
+	 * @return $this
+	 */
+	protected function configureEnvDetection($directory, $output)
+	{
+		File::replaceOnce(
+			$directory.'/bootstrap/start.php',
+			"'local' => array('homestead'),",
+			"'local' => array('*.local'),"
+		);
+		
+		$output->writeln('local env detection configured');
 		
 		return $this;
 	}
@@ -86,14 +111,12 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function installHelpers($directory, $output)
 	{
-		if (!File::exists($directory.'/app/helpers.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/helpers.stub',
-				$directory.'/app/helpers.php'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/helpers.stub',
+			$directory.'/app/helpers.php'
+		);
 		
-		File::append_once(
+		File::appendOnce(
 			$directory.'/app/start/global.php',
 			File::get(dirname(__FILE__).'/../stubs/app/start/global.helpers.partial')
 		);
@@ -113,14 +136,12 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function configureEventCallbacks($directory, $output)
 	{
-		if (!File::exists($directory.'/app/events.php')) {
-			File::copy(
-				dirname(__FILE__).'/../stubs/app/events.stub',
-				$directory.'/app/events.php'
-			);
-		}
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/events.stub',
+			$directory.'/app/events.php'
+		);
 		
-		File::append_once(
+		File::appendOnce(
 			$directory.'/app/start/global.php',
 			File::get(dirname(__FILE__).'/../stubs/app/start/global.events.partial')
 		);
@@ -140,7 +161,7 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function configureHttpExceptionsHandler($directory, $output)
 	{
-		File::append_once(
+		File::appendOnce(
 			$directory.'/app/start/global.php',
 			File::get(dirname(__FILE__).'/../stubs/app/start/global.httpexceptions.partial')
 		);
@@ -160,7 +181,7 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function configureResponseHeaders($directory, $output)
 	{
-		File::append_once(
+		File::appendOnce(
 			$directory.'/app/filters.php',
 			File::get(dirname(__FILE__).'/../stubs/app/filters.headers.partial')
 		);
@@ -201,12 +222,75 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 	 */
 	protected function setCompany($directory, $output)
 	{
-		File::config_append_once(
+		File::configAppendOnce(
 			$directory.'/app/config/app.php',
 			"'company' => 'Laravel Site'"
 		);
 		
 		$output->writeln('company name set in app config');
+		
+		return $this;
+	}
+	
+	/**
+	 * Create a custom model class for other models to extend.
+	 *
+	 * @param string          $directory
+	 * @param OutputInterface $output
+	 * 
+	 * @return $this
+	 */
+	protected function createCustomModel($directory, $output)
+	{
+		File::copyIfNone(
+			dirname(__FILE__).'/../stubs/app/models/Model.stub',
+			$directory.'/app/models/Model.php'
+		);
+		
+		$output->writeln('custom model installed');
+		
+		return $this;
+	}
+	
+	/**
+	 * Ignore local configs in git.
+	 *
+	 * @param string          $directory
+	 * @param OutputInterface $output
+	 * 
+	 * @return $this
+	 */
+	protected function ignoreLocalConfigs($directory, $output)
+	{
+		File::appendOnce(
+			$directory.'/.gitignore',
+			'/app/config/local'
+		);
+		
+		$output->writeln('/app/config/local added to .gitignore');
+		
+		return $this;
+	}
+	
+	/**
+	 * Add Carbon class alias.
+	 *
+	 * @param string          $directory
+	 * @param OutputInterface $output
+	 * 
+	 * @return $this
+	 */
+	protected function addCarbonAlias($directory, $output)
+	{
+		if (!File::has($directory.'/app/config/app.php', "'Carbon'")) {
+			File::replaceOnce(
+				$directory.'/app/config/app.php',
+				"=> 'Illuminate\Support\Facades\View',",
+				"=> 'Illuminate\Support\Facades\View',\n\t\t'Carbon'          => 'Carbon\Carbon',"
+			);
+		}
+		
+		$output->writeln('carbon class alias added');
 		
 		return $this;
 	}

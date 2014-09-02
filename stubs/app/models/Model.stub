@@ -1,0 +1,140 @@
+<?php
+
+class Model extends Eloquent
+{
+	public function getDates()
+	{
+		return array();
+	}
+	
+	public function getCreatedAtAttribute($value)
+	{
+		return $this->formatDate($value);
+	}
+	
+	public function getUpdatedAtAttribute($value)
+	{
+		return $this->formatDate($value);
+	}
+	
+	public function getDeletedAtAttribute($value)
+	{
+		return $this->formatDate($value);
+	}
+	
+	public function setCreatedAtAttribute($value)
+	{
+		$this->attributes['created_at'] = $this->processDate($value);
+	}
+	
+	public function setUpdatedAtAttribute($value)
+	{
+		$this->attributes['updated_at'] = $this->processDate($value);
+	}
+	
+	public function setDeletedAtAttribute($value)
+	{
+		$this->attributes['deleted_at'] = $this->processDate($value);
+	}
+	
+	public function formatDate($value)
+	{
+		if (null === $value) {
+			return null;
+		}
+		
+		return Carbon::createFromFormat($this->getDateFormat(), $value)
+			->setTimezone('UTC')
+			->toISO8601String();
+	}
+	
+	public function processDate($value)
+	{
+		$time = false;
+		
+		// Passed in a unix timestamp.
+		if (is_numeric($value)) {
+			$time = $value;
+		}
+		// Passed in a Carbon instance.
+		else if ($value instanceof Carbon) {
+			$time = $value->timestamp;
+		}
+		// Passed in a DateTime instance.
+		else if ($value instanceof DateTime) {
+			$time = $value->getTimestamp();
+		}
+		// Passed in a string.
+		else {
+			$time = strtotime($value);
+		}
+		
+		// Make sure we have a valid timestamp.
+		if (is_numeric($time)
+			&& ((string) (int) $time === (string) $time)
+			&& ($time <= PHP_INT_MAX)
+			&& ($time >= ~PHP_INT_MAX)
+		) {
+			return Carbon::createFromTimeStamp($time)->toDateTimeString();
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Find a model by its primary key or abort.
+	 *
+	 * @param  mixed  $id
+	 * @param  array  $columns
+	 * @return \Illuminate\Database\Eloquent\Model|Collection|static
+	 */
+	public static function findOrFail($id, $columns = array('*'))
+	{
+		$model = static::find($id);
+		if (!$model) {
+			$instance = new static;
+			$key      = $instance->getKeyName();
+			
+			if (static::onlyTrashed()->where($key, $id)->first()) {
+				App::abort(410);
+			}
+			
+			App::abort(404);
+		}
+		
+		return $model;
+	}
+	
+	/**
+	 * Customize find method to sort response when passed an array of IDs.
+	 *
+	 * @param array|int $id
+	 * @param array     $columns
+	 * 
+	 * @return mixed
+	 */
+	public static function find($id, $columns = array('*'))
+	{
+		$result = parent::find($id, $columns);
+		
+		if (!is_array($id)) {
+			return $result;
+		}
+		
+		$instance = new static;
+		$key      = $instance->getKeyName();
+		
+		$result->sortBy(function ($model) use ($id, $key) {
+			foreach ($id as $idx => $i) {
+				if ($model->{$key} == $i) {
+					return $idx;
+				}
+			}
+			return 0;
+		});
+		
+		// Call values() to reset the keys on the underlying array
+		// since we just sorted it.
+		return $result->values();
+	}
+}

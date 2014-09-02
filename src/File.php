@@ -125,6 +125,23 @@ class File
 	}
 	
 	/**
+	 * Copy a file, if it does not already exist.
+	 *
+	 * @param string $from
+	 * @param string $to
+	 * 
+	 * @return void
+	 */
+	public static function copyIfNone($from, $to)
+	{
+		if (self::exists($to)) {
+			return;
+		}
+		
+		self::copy($from, $to);
+	}
+	
+	/**
 	 * Recursively copy a folder.
 	 *
 	 * @param string $from
@@ -133,7 +150,7 @@ class File
 	 * @return void
 	 * @throws Exception
 	 */
-	public static function copy_folder($from, $to)
+	public static function copyFolder($from, $to)
 	{
 		$dir = opendir($from);
 		
@@ -142,7 +159,7 @@ class File
 		while (false !== ($file = readdir($dir))) {
 			if ($file != '.' && $file != '..') {
 				if (is_dir($from.'/'.$file)) {
-					self::copy_folder($from.'/'.$file, $to.'/'.$file);
+					self::copyFolder($from.'/'.$file, $to.'/'.$file);
 				}
 				else {
 					if (!copy($from.'/'.$file, $to.'/'.$file)) {
@@ -180,7 +197,7 @@ class File
 	 * 
 	 * @return void
 	 */
-	public static function replace_once($path, $search, $replace)
+	public static function replaceOnce($path, $search, $replace)
 	{
 		$content = self::get($path, '');
 		
@@ -217,7 +234,7 @@ class File
 	 * 
 	 * @return void
 	 */
-	public static function append_once($path, $content)
+	public static function appendOnce($path, $content)
 	{
 		$data = self::get($path, '');
 		
@@ -236,7 +253,7 @@ class File
 	 * 
 	 * @return void
 	 */
-	public static function config_append_once($path, $content)
+	public static function configAppendOnce($path, $content)
 	{
 		$data = self::get($path, '');
 		

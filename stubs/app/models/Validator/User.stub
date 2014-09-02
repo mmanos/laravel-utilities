@@ -1,0 +1,138 @@
+<?php namespace Validator;
+
+use Validator, Auth, Hash;
+
+/**
+ * User validator(s).
+ */
+class User
+{
+	/**
+	 * Default messages for this class.
+	 *
+	 * @var array
+	 */
+	public static $messages = array(
+		'email_available'  => 'This value is already taken.',
+		'email_exists'     => 'This user was not found.',
+		'password_correct' => 'This password is invalid.',
+	);
+	
+	/**
+	 * Create user validator.
+	 *
+	 * @return Validator
+	 */
+	public static function create(array $input, array $rules = array(), array $messages = array())
+	{
+		static::registerEmailAvailable();
+		
+		$rules = array_merge($rules, array(
+			'first_name'  => 'required|alpha_dash',
+			'last_name'   => 'required|alpha_dash',
+			'email'       => 'required|email|email_available',
+			'password'    => 'required|min:8',
+			'permissions' => 'in:public,private',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+	
+	/**
+	 * Update user validator.
+	 *
+	 * @return Validator
+	 */
+	public static function update(\User $user, array $input, array $rules = array(), array $messages = array())
+	{
+		static::registerEmailAvailable($user);
+		
+		$rules = array_merge($rules, array(
+			'first_name'  => 'alpha_dash',
+			'last_name'   => 'alpha_dash',
+			'email'       => 'email|email_available',
+			'permissions' => 'in:public,private',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+	
+	/**
+	 * Change password validator.
+	 *
+	 * @return Validator
+	 */
+	public static function password(array $input, array $rules = array(), array $messages = array())
+	{
+		static::registerPasswordCorrect();
+		
+		$rules = array_merge($rules, array(
+			'current_password' => 'required|min:8|password_correct',
+			'password'         => 'required|min:8|confirmed',
+		));
+		
+		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
+	}
+	
+	/*************************************************************************/
+	/* Custom Validation Rules                                               */
+	/*************************************************************************/
+	
+	/**
+	 * Register custom rule: email_available.
+	 *
+	 * @return void
+	 */
+	public static function registerEmailAvailable(\User $user = null)
+	{
+		Validator::extend('email_available', function ($attribute, $value, $parameters) use ($user) {
+			$existing_user = \User::withTrashed()->where('email', $value)->first();
+			if (!$existing_user) {
+				return true;
+			}
+			
+			if ($user && $user->id === $existing_user->id) {
+				return true;
+			}
+			
+			return false;
+		});
+	}
+	
+	/**
+	 * Register custom rule: email_exists.
+	 *
+	 * @return void
+	 */
+	public static function registerEmailExists()
+	{
+		Validator::extend('email_exists', function ($attribute, $value, $parameters) {
+			$existing_user = \User::where('email', $value)->first();
+			if (!empty($existing_user)) {
+				return true;
+			}
+			
+			return false;
+		});
+	}
+	
+	/**
+	 * Register custom rule: password_correct.
+	 *
+	 * @return void
+	 */
+	public static function registerPasswordCorrect()
+	{
+		Validator::extend('password_correct', function ($attribute, $value, $parameters) {
+			if (!Auth::check()) {
+				return false;
+			}
+			
+			if (Hash::check($value, \Auth::user()->getAuthPassword())) {
+				return true;
+			}
+			
+			return false;
+		});
+	}
+}
