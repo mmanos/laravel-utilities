@@ -97,7 +97,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 			File::replaceOnce(
 				$directory.'/app/config/app.php',
 				"=> 'Illuminate\Support\Facades\View',",
-				"=> 'Illuminate\Support\Facades\View',\n\t\t'Casset'          => 'Mmanos\Casset\Casset',"
+				"=> 'Illuminate\Support\Facades\View',\n\t\t'Casset'          => 'Mmanos\Casset\Facades\Casset',"
 			);
 		}
 		
