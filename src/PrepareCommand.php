@@ -93,7 +93,7 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 		File::replaceOnce(
 			$directory.'/bootstrap/start.php',
 			"'local' => array('homestead'),",
-			"'local' => array('*.local'),"
+			"'local' => array('homestead', '*.local'),"
 		);
 		
 		$output->writeln('local env detection configured');
@@ -286,7 +286,7 @@ class PrepareCommand extends \Symfony\Component\Console\Command\Command
 			File::replaceOnce(
 				$directory.'/app/config/app.php',
 				"=> 'Illuminate\Support\Facades\View',",
-				"=> 'Illuminate\Support\Facades\View',\n\t\t'Carbon'          => 'Carbon\Carbon',"
+				"=> 'Illuminate\Support\Facades\View',\n\t\t'Carbon'            => 'Carbon\Carbon',"
 			);
 		}
 		

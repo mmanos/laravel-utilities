@@ -81,7 +81,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 	{
 		if (!File::has($directory.'/composer.json', 'mmanos/laravel-casset')) {
 			$output->writeln('<info>Installing mmanos/laravel-casset...</info>');
-			exec('composer require mmanos/laravel-casset:1.3.*', $out);
+			exec('composer require mmanos/laravel-casset:1.4.*', $out);
 			echo implode("\n", $out) . "\n";
 		}
 		
@@ -122,7 +122,7 @@ class FrontendCommand extends \Symfony\Component\Console\Command\Command
 	{
 		if (!File::has($directory.'/composer.json', 'twbs/bootstrap')) {
 			$output->writeln('<info>Installing twbs/bootstrap...</info>');
-			exec('composer require twbs/bootstrap:3.2.0', $out);
+			exec('composer require twbs/bootstrap:3.3.1', $out);
 			echo implode("\n", $out) . "\n";
 		}
 		

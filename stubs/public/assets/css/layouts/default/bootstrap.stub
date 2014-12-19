@@ -35,6 +35,7 @@
 //@import "../../../../../vendor/twbs/bootstrap/less/media.less";
 //@import "../../../../../vendor/twbs/bootstrap/less/list-group.less";
 @import "../../../../../vendor/twbs/bootstrap/less/panels.less";
+@import "../../../../../vendor/twbs/bootstrap/less/responsive-embed.less";
 //@import "../../../../../vendor/twbs/bootstrap/less/wells.less";
 //@import "../../../../../vendor/twbs/bootstrap/less/close.less";
 

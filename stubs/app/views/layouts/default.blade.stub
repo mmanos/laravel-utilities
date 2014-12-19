@@ -5,12 +5,12 @@
 {{ Casset::container('layout')->add('libs/font-awesome/less/font-awesome.less') }}
 {{ Casset::container('layout')->add('css/layouts/default/layout.less') }}
 
-{{ Casset::container('layout')->add('jquery::/jquery.min.js') }}
+{{ Casset::container('layout')->add('frameworks/jquery::/jquery.min.js') }}
 
-{{ Casset::container('layout')->add('bootstrap::/js/collapse.js') }}
-{{ Casset::container('layout')->add('bootstrap::/js/transition.js') }}
-{{ Casset::container('layout')->add('bootstrap::/js/dropdown.js') }}
-{{ Casset::container('layout')->add('bootstrap::/js/modal.js') }}
+{{ Casset::container('layout')->add('twbs/bootstrap::/js/collapse.js') }}
+{{ Casset::container('layout')->add('twbs/bootstrap::/js/transition.js') }}
+{{ Casset::container('layout')->add('twbs/bootstrap::/js/dropdown.js') }}
+{{ Casset::container('layout')->add('twbs/bootstrap::/js/modal.js') }}
 
 <!DOCTYPE html>
 <html lang="en">
