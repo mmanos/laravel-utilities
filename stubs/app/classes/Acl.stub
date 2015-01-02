@@ -47,10 +47,11 @@ class Acl extends Zend\Permissions\Acl\Acl
 	 * @param ResourceInterface|object|string $resource
 	 * @param string                          $privilege
 	 * @param RoleInterface|string|mixed|User $role
+	 * @param ResourceInterface|object|string $resource_context
 	 * 
 	 * @return boolean
 	 */
-	public function isAllowed($resource = null, $privilege = null, $role = null)
+	public function isAllowed($resource = null, $privilege = null, $role = null, $resource_context = null)
 	{
 		// Fetch roles from a user/guest, if needed.
 		if (null === $role || $role instanceof User) {
@@ -63,7 +64,7 @@ class Acl extends Zend\Permissions\Acl\Acl
 				
 				$roles = array_merge(
 					$roles,
-					(array) $config['user_roles']($role, $resource)
+					(array) $config['user_roles']($role, $resource, $resource_context)
 				);
 			}
 			
@@ -81,8 +82,15 @@ class Acl extends Zend\Permissions\Acl\Acl
 				$resource = $resource->permissions;
 			}
 			else if (!$resource instanceof ResourceInterface) {
-				// Invalid object passed.
-				$resource = null;
+				if ($resource instanceof Model) {
+					$resource = str_replace('\\', '_', Str::lower(get_class($resource)));
+					if (!$this->hasResource($resource)) {
+						$resource = null;
+					}
+				}
+				else {
+					$resource = null;
+				}
 			}
 		}
 		
@@ -103,17 +111,18 @@ class Acl extends Zend\Permissions\Acl\Acl
 	 * @param ResourceInterface|object|string $resource
 	 * @param string                          $privilege
 	 * @param RoleInterface|string|mixed|User $role
+	 * @param ResourceInterface|object|string $resource_context
 	 * 
 	 * @return boolean
 	 */
-	public static function allowed($resource = null, $privilege = null, $role = null)
+	public static function allowed($resource = null, $privilege = null, $role = null, $resource_context = null)
 	{
 		// Use authenticated user if no role is passed.
 		if (null === $role) {
 			$role = Auth::user();
 		}
 		
-		return static::instance()->isAllowed($resource, $privilege, $role);
+		return static::instance()->isAllowed($resource, $privilege, $role, $resource_context);
 	}
 	
 	/**
@@ -123,12 +132,13 @@ class Acl extends Zend\Permissions\Acl\Acl
 	 * @param ResourceInterface|object|string $resource
 	 * @param string                          $privilege
 	 * @param RoleInterface|string|mixed|User $role
+	 * @param ResourceInterface|object|string $resource_context
 	 * 
 	 * @return void
 	 */
-	public static function allowedOrFail($resource = null, $privilege = null, $role = null)
+	public static function allowedOrFail($resource = null, $privilege = null, $role = null, $resource_context = null)
 	{
-		if (!static::allowed($resource, $privilege, $role)) {
+		if (!static::allowed($resource, $privilege, $role, $resource_context)) {
 			App::abort(403);
 		}
 	}

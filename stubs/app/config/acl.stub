@@ -14,12 +14,15 @@ return array(
 	*/
 	'roles' => array(
 		'guest',
+		'public'      => 'guest',
 		'user'        => 'guest', // Inherits from guest
 		
-		'creator',
+		'owner',
 		
 		'moderator',
 		'admin'       => 'moderator', // Inherits from moderator
+		
+		'systemadmin',
 	),
 	
 	/*
@@ -33,10 +36,19 @@ return array(
 	|
 	*/
 	'resources' => array(
-		'public',
-		'private',
-		'moderators',
-		'admins',
+		'guest_accessible',
+		'user' => 'guest_accessible',
+		
+		'user_accessible',
+		
+		'owner_accessible',
+		'user:email' => 'owner_accessible',
+		
+		'moderator_accessible',
+		
+		'admin_accessible',
+		
+		'systemadmin_accessible',
 	),
 	
 	/*
@@ -50,22 +62,32 @@ return array(
 	*/
 	'rules' => function ($acl) {
 		$acl->allow('guest',
-			array('public'),
+			array('guest_accessible'),
 			array('view')
 		);
 		
-		$acl->allow('creator',
-			array('public', 'private'),
+		$acl->allow('user',
+			array('user_accessible'),
+			array('view')
+		);
+		
+		$acl->allow('owner',
+			array('guest_accessible', 'user_accessible', 'owner_accessible'),
 			array('view', 'create', 'edit', 'delete')
 		);
 		
 		$acl->allow('moderator',
-			array('public', 'private', 'moderators'),
+			array('moderator_accessible'),
 			array('view', 'create', 'edit', 'delete')
 		);
 		
 		$acl->allow('admin',
-			array('admins'),
+			array('admin_accessible'),
+			array('view', 'create', 'edit', 'delete')
+		);
+		
+		$acl->allow('systemadmin',
+			array('systemadmin_accessible'),
 			array('view', 'create', 'edit', 'delete')
 		);
 	},
@@ -79,7 +101,7 @@ return array(
 	| An optional resource may be passed for resource-specific role definitions.
 	|
 	*/
-	'user_roles' => function ($user = null, $resource = null) {
+	'user_roles' => function ($user = null, $resource = null, $resource_context = null) {
 		// Assign 'guest' to logged out user.
 		if (!$user instanceof User) {
 			return array('guest');
@@ -88,19 +110,23 @@ return array(
 		// Assign 'user' to logged in user.
 		$roles = array('user');
 		
+		// Assign 'owner' to owners/creators of content.
+		$context = $resource_context ? $resource_context : $resource;
+		if ($context instanceof Eloquent) {
+			if ($context->owner_id == $user->id) {
+				$roles[] = 'owner';
+			}
+			else if ($context->creator_id == $user->id) {
+				$roles[] = 'owner';
+			}
+			else if ($context instanceof User && $context->id == $user->id) {
+				$roles[] = 'owner';
+			}
+		}
+		
 		// Check user roles table.
 		foreach ($user->roles as $role) {
 			$roles[] = $role->name;
-		}
-		
-		// Assign 'creator' to creators of content.
-		if ($resource instanceof Eloquent) {
-			if ($resource->creator_id == $user->id) {
-				$roles[] = 'creator';
-			}
-			else if ($resource instanceof User && $resource->id == $user->id) {
-				$roles[] = 'creator';
-			}
 		}
 		
 		return $roles;
