@@ -3,20 +3,6 @@
 class Role extends Model
 {
 	/**
-	 * The database table used by the model.
-	 *
-	 * @var string
-	 */
-	protected $table = 'roles';
-	
-	/**
-	 * The attributes excluded from the model's JSON form.
-	 *
-	 * @var array
-	 */
-	protected $hidden = array('updated_at');
-	
-	/**
 	 * The attributes that aren't mass assignable.
 	 *
 	 * @var array

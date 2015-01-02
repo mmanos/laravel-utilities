@@ -1,6 +1,6 @@
 <?php namespace Service\User;
 
-use Event, Str, Config;
+use Event, Str, Config, Hash;
 
 /**
  * The User Auth service.
@@ -18,15 +18,12 @@ class Auth
 	{
 		$token = Str::random(20);
 		
-		if (!$meta = $user->metas()->where('name', 'auth_reset_token')->first()) {
-			$meta = new \User\Meta(array(
-				'user_id' => $user->id,
-				'name'    => 'auth_reset_token',
-			));
-		}
-		
-		$meta->value = $token;
-		$meta->save();
+		$user->auth_reset_token = $token;
+		$user->reset_token_expires_at = date(
+			'Y-m-d H:i:s',
+			time() + Config::get('auth.reset_token_expires', 604800)
+		);
+		$user->save();
 		
 		Event::fire('user.auth.forgotPassword', array($user, $token));
 		
@@ -42,20 +39,13 @@ class Auth
 	 */
 	public static function userFromToken($token)
 	{
-		$meta = \User\Meta::where('name', 'auth_reset_token')
-			->where('value', $token)
-			->first();
+		$user = \User::where('auth_reset_token', $token)->first();
 		
-		if (!$meta) {
+		if (!$user) {
 			return false;
 		}
 		
-		$expires = Config::get('auth.reset_token_expires', 604800);
-		if (time() - strtotime($meta->created_at) >= $expires) {
-			return false;
-		}
-		
-		if (!$user = \User::find($meta->user_id)) {
+		if (time() >= strtotime($user->reset_token_expires_at)) {
 			return false;
 		}
 		
@@ -73,12 +63,10 @@ class Auth
 	 */
 	public static function reset(\User $user, $password)
 	{
-		\Service\User::update($user, array(
-			'password' => $password,
-			'metas'    => array(
-				'auth_reset_token' => null,
-			),
-		));
+		$user->password = Hash::make($password);
+		$user->auth_reset_token = null;
+		$user->reset_token_expires_at = null;
+		$user->save();
 		
 		Event::fire('user.auth.reset', array($user, $password));
 	}

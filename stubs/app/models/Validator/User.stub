@@ -28,11 +28,10 @@ class User
 		static::registerEmailAvailable();
 		
 		$rules = array_merge($rules, array(
-			'first_name'  => 'required|alpha_dash',
-			'last_name'   => 'required|alpha_dash',
-			'email'       => 'required|email|email_available',
-			'password'    => 'required|min:8',
-			'permissions' => 'in:public,private',
+			'first_name' => 'required|alpha_dash',
+			'last_name'  => 'required|alpha_dash',
+			'email'      => 'required|email|email_available',
+			'password'   => 'required|min:8',
 		));
 		
 		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
@@ -48,10 +47,9 @@ class User
 		static::registerEmailAvailable($user);
 		
 		$rules = array_merge($rules, array(
-			'first_name'  => 'alpha_dash',
-			'last_name'   => 'alpha_dash',
-			'email'       => 'email|email_available',
-			'permissions' => 'in:public,private',
+			'first_name' => 'alpha_dash',
+			'last_name'  => 'alpha_dash',
+			'email'      => 'email|email_available',
 		));
 		
 		return Validator::make($input, $rules, array_merge(self::$messages, $messages));
@@ -128,7 +126,7 @@ class User
 				return false;
 			}
 			
-			if (Hash::check($value, \Auth::user()->getAuthPassword())) {
+			if (Hash::check($value, Auth::user()->getAuthPassword())) {
 				return true;
 			}
 			

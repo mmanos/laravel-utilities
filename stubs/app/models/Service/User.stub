@@ -1,6 +1,6 @@
 <?php namespace Service;
 
-use Event, Hash, Str;
+use Event, Hash;
 
 /**
  * The User service.
@@ -15,28 +15,20 @@ class User
 	 * @param string  $first_name First name.
 	 * @param string  $last_name  Last name.
 	 * @param array   $options    Array of optional parameters:
-	 *                            - permissions
 	 *                            - enc_password
-	 *                            - metas
 	 *                            - roles
 	 * 
 	 * @return \User
 	 */
 	public static function create($email, $password, $first_name, $last_name, array $options = array())
 	{
-		if (empty($options['metas']) || !is_array($options['metas'])) {
-			$options['metas'] = array();
-		}
-		
 		$user = new \User(array(
-			'email'       => $email,
-			'password'    => Hash::make($password),
-			'permissions' => 'public',
+			'email'      => $email,
+			'password'   => Hash::make($password),
+			'first_name' => $first_name,
+			'last_name'  => $last_name,
+			
 		));
-		
-		if (!empty($options['permissions'])) {
-			$user->permissions = $options['permissions'];
-		}
 		
 		if (!empty($options['enc_password'])) {
 			$user->password = $options['enc_password'];
@@ -44,21 +36,9 @@ class User
 		
 		$user->save();
 		
-		$options['metas']['first_name'] = $first_name;
-		$options['metas']['last_name']  = $last_name;
-		
-		foreach ($options['metas'] as $name => $value) {
-			$user->metas()->save(new \User\Meta(array(
-				'name'  => $name,
-				'value' => $value,
-			)));
-		}
-		
 		if (!empty($options['roles']) && is_array($options['roles'])) {
 			foreach ($options['roles'] as $role) {
-				$user->roles()->attach(
-					\Role::where('name', $role)->first()
-				);
+				$user->roles()->attach(\Role::where('name', $role)->first());
 			}
 		}
 		
@@ -75,9 +55,7 @@ class User
 	 *                       - email
 	 *                       - first_name
 	 *                       - last_name
-	 *                       - permissions
 	 *                       - password
-	 *                       - metas
 	 *                       - remove_roles
 	 *                       - add_roles
 	 * 
@@ -88,45 +66,20 @@ class User
 		if (!empty($options['email'])) {
 			$user->email = $options['email'];
 		}
-		
-		if (!empty($options['permissions'])) {
-			$user->permissions = $options['permissions'];
+		if (!empty($options['first_name'])) {
+			$user->first_name = $options['first_name'];
 		}
-		
+		if (!empty($options['last_name'])) {
+			$user->last_name  = $options['last_name'];
+		}
 		if (!empty($options['password'])) {
 			$user->password = Hash::make($options['password']);
 		}
+		if (!empty($options['enc_password'])) {
+			$user->password = $options['enc_password'];
+		}
 		
 		$user->save();
-		
-		if (!empty($options['first_name'])) {
-			$options['metas']['first_name'] = $options['first_name'];
-		}
-		if (!empty($options['last_name'])) {
-			$options['metas']['last_name']  = $options['last_name'];
-		}
-		
-		if (!empty($options['metas']) && is_array($options['metas'])) {
-			foreach ($options['metas'] as $name => $value) {
-				if (null === $value) {
-					if ($meta = $user->metas()->where('name', $name)->first()) {
-						$meta->delete();
-					}
-					
-					continue;
-				}
-				
-				if (!$meta = $user->metas()->where('name', $name)->first()) {
-					$meta = new \User\Meta(array(
-						'user_id' => $user->id,
-						'name'    => $name,
-					));
-				}
-				
-				$meta->value = $value;
-				$meta->save();
-			}
-		}
 		
 		if (!empty($options['remove_roles']) && is_array($options['remove_roles'])) {
 			foreach ($options['remove_roles'] as $remove) {
@@ -142,9 +95,7 @@ class User
 					continue;
 				}
 				
-				$user->roles()->attach(
-					\Role::where('name', $add)->first()
-				);
+				$user->roles()->attach(\Role::where('name', $add)->first());
 			}
 		}
 		
@@ -160,6 +111,8 @@ class User
 	 */
 	public static function delete(\User $user)
 	{
+		$user->email = $user->email . '-DELETED-' . microtime(true);
+		$user->save();
 		$user->delete();
 		
 		Event::fire('user.delete', array($user));

@@ -6,7 +6,6 @@
 
 @section('content')
 	<div class="container margin-top">
-		<i class="fa fa-home"></i>
-		Hello Laravel!
+		<i class="fa fa-home"></i> Welcome!
 	</div>
 @stop

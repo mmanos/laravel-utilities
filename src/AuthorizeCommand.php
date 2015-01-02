@@ -15,7 +15,7 @@ class AuthorizeCommand extends \Symfony\Component\Console\Command\Command
 	protected function configure()
 	{
 		$this->setName('authorize')
-			->setDescription('Add authorization support to an existing Laravle application');
+			->setDescription('Add authorization support to an existing Laravel application');
 	}
 	
 	/**
@@ -54,8 +54,8 @@ class AuthorizeCommand extends \Symfony\Component\Console\Command\Command
 	protected function createAuthModels($directory, $output)
 	{
 		File::copyIfNone(
-			dirname(__FILE__).'/../stubs/app/database/migrations/2014_09_02_000000_create_authorize_tables.stub',
-			$directory.'/app/database/migrations/2014_09_02_000000_create_authorize_tables.php'
+			dirname(__FILE__).'/../stubs/app/database/migrations/2015_01_01_000000_create_authorize_tables.stub',
+			$directory.'/app/database/migrations/2015_01_01_000000_create_authorize_tables.php'
 		);
 		File::copy(
 			dirname(__FILE__).'/../stubs/app/models/User.stub',
@@ -64,10 +64,6 @@ class AuthorizeCommand extends \Symfony\Component\Console\Command\Command
 		File::copyIfNone(
 			dirname(__FILE__).'/../stubs/app/models/Role.stub',
 			$directory.'/app/models/Role.php'
-		);
-		File::copyIfNone(
-			dirname(__FILE__).'/../stubs/app/models/User/Meta.stub',
-			$directory.'/app/models/User/Meta.php'
 		);
 		File::copyIfNone(
 			dirname(__FILE__).'/../stubs/app/models/Service/User.stub',

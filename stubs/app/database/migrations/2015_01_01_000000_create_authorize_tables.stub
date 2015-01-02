@@ -16,24 +16,18 @@ class CreateAuthorizeTables extends Migration
 			$table->increments('id');
 			$table->string('email');
 			$table->string('password');
-			$table->string('remember_token')->nullable();
-			$table->string('permissions');
+			$table->string('first_name')->nullable();
+			$table->string('last_name')->nullable();
 			$table->timestamps();
 			$table->softDeletes();
+			$table->string('remember_token')->nullable();
+			$table->string('auth_reset_token')->nullable();
+			$table->timestamp('reset_token_expires_at')->nullable();
 			
-			$table->unique('email');
-			$table->index(array('created_at', 'deleted_at', 'permissions'), 'recent_users');
-		});
-		
-		Schema::create('user_metas', function ($table) {
-			$table->increments('id');
-			$table->integer('user_id')->unsigned();
-			$table->string('name');
-			$table->text('value')->nullable();
-			$table->timestamps();
-			
-			$table->unique(array('user_id', 'name'));
-			$table->index('name');
+			$table->unique('email', 'idx_email');
+			$table->index('auth_reset_token', 'idx_auth_reset_token');
+			$table->index(array('created_at', 'deleted_at'), 'recent_users');
+			$table->index(array('first_name', 'deleted_at', 'created_at'), 'alpha_users');
 		});
 		
 		Schema::create('roles', function ($table) {
@@ -41,7 +35,7 @@ class CreateAuthorizeTables extends Migration
 			$table->string('name');
 			$table->timestamps();
 			
-			$table->unique('name');
+			$table->unique('name', 'idx_name');
 		});
 		
 		Schema::create('user_roles', function ($table) {
@@ -49,7 +43,7 @@ class CreateAuthorizeTables extends Migration
 			$table->integer('role_id')->unsigned();
 			$table->timestamps();
 			
-			$table->unique(array('user_id', 'role_id'));
+			$table->unique(array('user_id', 'role_id'), 'user_roles');
 		});
 		
 		DB::table('roles')->insertGetId(array(
@@ -72,7 +66,6 @@ class CreateAuthorizeTables extends Migration
 	public function down()
 	{
 		Schema::drop('users');
-		Schema::drop('user_metas');
 		Schema::drop('roles');
 		Schema::drop('user_roles');
 	}

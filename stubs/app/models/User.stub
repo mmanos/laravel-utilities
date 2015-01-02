@@ -8,25 +8,18 @@ class User extends Model implements UserInterface
 	use UserTrait, SoftDeletingTrait;
 	
 	/**
-	 * The database table used by the model.
-	 *
-	 * @var string
-	 */
-	protected $table = 'users';
-	
-	/**
 	 * The attributes excluded from the model's JSON form.
 	 *
 	 * @var array
 	 */
-	protected $hidden = array('password', 'updated_at', 'deleted_at', 'remember_token', 'pivot', 'roles', 'metas');
+	protected $hidden = array('password', 'deleted_at', 'remember_token', 'auth_reset_token', 'reset_token_expires_at', 'pivot', 'roles');
 	
 	/**
 	 * The accessors to append to the model's array form.
 	 *
 	 * @var array
 	 */
-	protected $appends = array('first_name', 'last_name', 'avatar_url');
+	protected $appends = array('avatar_url');
 	
 	/**
 	 * The attributes that aren't mass assignable.
@@ -36,6 +29,13 @@ class User extends Model implements UserInterface
 	protected $guarded = array('id');
 	
 	/**
+	 * The dates array.
+	 *
+	 * @var array
+	 */
+	protected $dates = array('deleted_at');
+	
+	/**
 	 * Return the roles this user belongs to.
 	 *
 	 * @var Collection
@@ -43,54 +43,6 @@ class User extends Model implements UserInterface
 	public function roles()
 	{
 		return $this->belongsToMany('Role', 'user_roles')->withTimestamps();
-	}
-	
-	/**
-	 * Return the metas associated with this user.
-	 *
-	 * @var Collection
-	 */
-	public function metas()
-	{
-		return $this->hasMany('User\Meta');
-	}
-	
-	/**
-	 * Returns a piece of meta information for this user.
-	 * $default, if not found.
-	 *
-	 * @param string $name    Meta name.
-	 * @param mixed  $default Default value.
-	 * 
-	 * @return boolean
-	 */
-	public function meta($name, $default = null)
-	{
-		$metas = $this->metas->filter(function ($meta) use ($name) {
-			return ($meta->name == $name);
-		});
-		
-		return $metas->isEmpty() ? $default : $metas->first()->value;
-	}
-	
-	/**
-	 * Convenience method to get the first name for this user.
-	 *
-	 * @return string
-	 */
-	public function getFirstNameAttribute()
-	{
-		return $this->meta('first_name');
-	}
-	
-	/**
-	 * Convenience method to get the last name for this user.
-	 *
-	 * @return string
-	 */
-	public function getLastNameAttribute()
-	{
-		return $this->meta('last_name');
 	}
 	
 	/**
@@ -133,34 +85,14 @@ class User extends Model implements UserInterface
 	}
 	
 	/**
-	 * Convert the model instance to an array.
+	 * Returns true if this user has the given role.
 	 *
-	 * @return array
+	 * @var string $role
+	 * 
+	 * @return bool
 	 */
-	public function toArray()
+	public function hasRole($role)
 	{
-		if (!Site::wantsApi()) {
-			return parent::toArray();
-		}
-		
-		// Handle any preloading.
-		$output = (array) Input::get('output', array());
-		if (in_array('user:metas', $output)) {
-			$this->metas;
-		}
-		
-		$arr = parent::toArray();
-		
-		// Are we allowed to display the email address?
-		if (!Acl::allowed($this, 'edit')) {
-			unset($arr['email']);
-		}
-		
-		// Handle any additional output.
-		if (in_array('user:roles', $output)) {
-			$arr['roles'] = $this->user_roles;
-		}
-		
-		return $arr;
+		return in_array($role, $this->user_roles);
 	}
 }

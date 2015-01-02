@@ -37,7 +37,7 @@
 @import "../../../../../vendor/twbs/bootstrap/less/panels.less";
 @import "../../../../../vendor/twbs/bootstrap/less/responsive-embed.less";
 //@import "../../../../../vendor/twbs/bootstrap/less/wells.less";
-//@import "../../../../../vendor/twbs/bootstrap/less/close.less";
+@import "../../../../../vendor/twbs/bootstrap/less/close.less";
 
 // Components w/ JavaScript
 @import "../../../../../vendor/twbs/bootstrap/less/modals.less";
